@@ -1,0 +1,14 @@
+game.Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function(character)
+	
+		local head = character:WaitForChild("Head")
+
+		-- Crea la luz
+		local light = Instance.new("PointLight")
+		light.Parent = head
+		light.Range = 15     
+		light.Brightness = 0.75   
+		light.Color = Color3.fromRGB(255, 255, 100)
+
+	end)
+end)
