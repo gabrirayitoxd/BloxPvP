@@ -1,14 +1,117 @@
-game.Players.PlayerAdded:Connect(function(player)
-	player.CharacterAdded:Connect(function(character)
-	
-		local head = character:WaitForChild("Head")
+-- SI QUIERES AÑADIR MAS LEADERSTATS O TABLA DE PUNTAJES, MIRA MI TUTORIAL DE "LEADERSTATS" CON AUTOGUARDADO!
+local DataStoreService = game:GetService("DataStoreService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 
-		-- Crea la luz
-		local light = Instance.new("PointLight")
-		light.Parent = head
-		light.Range = 15     
-		light.Brightness = 0.75   
-		light.Color = Color3.fromRGB(255, 255, 100)
+local Ranura = DataStoreService:GetDataStore("Ranura")
+local RanuraTOOLS = DataStoreService:GetDataStore("RanuraTOOLS")
+
+game.Players.PlayerAdded:Connect(function(player)
+	local leaderstats = Instance.new("Folder" , player)
+	leaderstats.Name = "leaderstats"
+
+	local Money = Instance.new("IntValue" , leaderstats)
+	Money.Name = "Money" -- CAMBIA "MONEY" A TU VALOR SI TIENES OTRO!
+
+	local FolderPlayer = Instance.new("Folder")
+	FolderPlayer.Name = player.Name
+	FolderPlayer.Parent = ReplicatedStorage.Jugadores
+
+
+	---- CARGADO DE DINERO / O PUNTAJE ---
+	local playerID = player.UserId
+	local Data
+
+
+	local Correct, Error = pcall(function()
+		Data = Ranura:GetAsync(playerID)
 
 	end)
+
+	if Correct == true then
+		print("leaderstats Cargados De: " , player)
+		Money.Value = Data
+
+	else
+		warn(Error)
+	end
+	---- CARGADO DE DINERO / O PUNTAJE ---
+
+
+
+	---- CARGADO DE ITEMS O TOOLS ---
+
+	local DataTools
+	pcall(function()
+		DataTools = RanuraTOOLS:GetAsync(player.UserId.."-Tools")
+	end)
+
+	if DataTools then
+		for i, arma in pairs(DataTools) do
+			wait()
+
+			local ArmaClon = ServerStorage.ItemsTiendaNPC[arma]:Clone()
+			ArmaClon.Parent = player.Backpack
+
+			local ArmaClon2 = ServerStorage.ItemsTiendaNPC[arma]:Clone()
+			ArmaClon2.Parent = ReplicatedStorage.Jugadores[player.Name]
+
+		end
+	end
+
+
+	---- CARGADO DE ITEMS O TOOLS ---
+
+
+
+	---- JUGADOR RECIBE SUS TOOLS AL RE APARECER EN EL JUEGO --- (PUEDES BORRAR ESTA PARTE SI QUIERES QUE NO LO HAGA (NO RECOMENDABLE)) ----
+
+	player.CharacterAdded:Connect(function(character)
+		for i, arma in pairs(ReplicatedStorage.Jugadores[player.Name]:GetChildren()) do
+			wait()
+			local ArmaClon = ServerStorage.ItemsTiendaNPC[arma.Name]:Clone()
+			ArmaClon.Parent = player.Backpack
+		end
+	end)
+
+	---- JUGADOR RECIBE SUS TOOLS AL RE APARECER EN EL JUEGO --- (PUEDES BORRAR ESTA PARTE SI QUIERES QUE NO LO HAGA (NO RECOMENDABLE)) ----
+end)
+
+
+
+game.Players.PlayerRemoving:Connect(function(player)
+
+	---- GUARDADO DE DINERO / O PUNTAJE ---
+	local playerID = player.UserId
+
+	local Correct, Error = pcall(function()
+		Ranura:SetAsync(playerID, player.leaderstats.Money.Value)
+	end)
+
+	if Correct == true then
+		print("Leaderstats salvados de jugador: " , player)
+	else
+		warn(Error)
+	end
+	---- GUARDADO DE DINERO / O PUNTAJE ---
+
+
+
+	---- GUARDADO DE ITEMS O TOOLS ---
+
+	pcall(function()
+		local Armas = ReplicatedStorage.Jugadores[player.Name]:GetChildren()
+		local TablaArmas = {}
+
+		for i, armamento in pairs(Armas) do
+			table.insert(TablaArmas, armamento.Name)
+		end
+
+		RanuraTOOLS:SetAsync(player.UserId.."-Tools" , TablaArmas)
+		ReplicatedStorage.Jugadores[player.Name]:Destroy()
+
+	end)
+
+	---- GUARDADO DE ITEMS O TOOLS ---
+
 end)
